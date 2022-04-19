@@ -11,13 +11,13 @@ struct String
         String result;
         result.capacity = capacity;
         result.size = 0;
-        result.data = (char*)malloc(sizeof(char) * result.capacity);
+        result.data = (char*)default_allocate(sizeof(char) * result.capacity);
         return result;
     }
 
     static String copy_from_c_string(const char* source)
     {
-        auto source_length = strlen(source);
+        auto source_length = get_c_string_length(source);
         auto result = allocate(source_length);
         for (u64 i = 0; i < source_length; i++)
         {
@@ -31,7 +31,7 @@ struct String
         String result;
         result.capacity = capacity;
         result.size = size;
-        result.data = (char*)malloc(sizeof(char) * capacity);
+        result.data = (char*)default_allocate(sizeof(char) * capacity);
         for (u64 i = 0; i < size; i++)
         {
             result.data[i] = data[i];
@@ -42,7 +42,7 @@ struct String
     void deallocate()
     {
         assert(capacity != 0);
-        free(data);
+        default_deallocate(data);
         capacity = 0;
     }
 
@@ -51,8 +51,9 @@ struct String
         if (size == capacity)
         {
             assert(capacity != 0);
+            auto new_capacity = capacity * 2;
+            data = (char*)default_reallocate(data, capacity * sizeof(char), new_capacity * sizeof(char));
             capacity *= 2;
-            data = (char*)realloc(data, sizeof(char) * capacity);
         }
         data[size] = c;
         size++;
@@ -82,20 +83,10 @@ struct String
 
     void reverse()
     {
-        char temp;
-        for (u64 i = 0; i < size / 2; i++)
-        {
-            temp = data[i];
-            data[i] = data[size - i - 1];
-            data[size - i - 1] = temp;
-        }
+        reverse_memory(data, size);
     }
 
-    void print()
-    {
-        printf("%.*s", (int)size, data);
-    }
-
+    // for use in a debugger
     char* debug()
     {
         push('\0');
@@ -147,9 +138,48 @@ String number_to_string(u32 number)
     {
         result.push((number % 10) + '0');
         number /= 10;
-    } while (number != 0);
+    }
+    while (number != 0);
 
     result.reverse();
 
     return result;
+}
+
+u64 number_to_string(u64 value, char* buffer)
+{
+    u64 i = 0;
+    do
+    {
+        buffer[i] = (value % 10) + '0';
+        value /= 10;
+        i++;
+    }
+    while (value != 0);
+
+    reverse_memory(buffer, i);
+
+    return i;
+}
+
+void print(u64 value)
+{
+    char message[20];
+    auto number_length = number_to_string(value, message);
+    write(STDOUT, message, number_length);
+}
+
+void print(CStringView data, u64 size)
+{
+    write(STDOUT, data, size);
+}
+
+void print(String string)
+{
+    print(string.data, string.size);
+}
+
+void print(CStringView string)
+{
+    print(string, get_c_string_length(string));
 }

@@ -12,14 +12,14 @@ struct List
         List<T> result;
         result.capacity = capacity;
         result.size = 0;
-        result.data = (T*)malloc(sizeof(T) * result.capacity);
+        result.data = (T*)default_allocate(sizeof(T) * result.capacity);
         return result;
     }
 
     void deallocate()
     {
         assert(capacity != 0);
-        free(data);
+        default_deallocate(data);
         capacity = 0;
     }
 
@@ -27,8 +27,9 @@ struct List
     {
         if (size == capacity)
         {
-            capacity *= 2;
-            data = (T*)realloc(data, sizeof(T) * capacity);
+            auto new_capacity = capacity * 2;
+            data = (T*)default_reallocate(data, capacity * sizeof(T), new_capacity * sizeof(T));
+            capacity = new_capacity;
         }
         data[size] = element;
         size++;

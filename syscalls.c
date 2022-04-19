@@ -1,0 +1,228 @@
+typedef s32 Descriptor;
+
+const Descriptor STDIN = 0;
+const Descriptor STDOUT = 1;
+const Descriptor STDERR = 2;
+
+static inline s64 read
+(
+    Descriptor file_descriptor,
+    void* buffer,
+    u64 buffer_size
+)
+{
+    s64 result;
+    asm volatile
+    (
+        "syscall"
+        : "=a"(result)
+        : "a"(0), "D"(file_descriptor), "S"(buffer), "d"(buffer_size)
+        : "rcx", "r11", "memory"
+    );
+    return result;
+}
+
+static inline s64 write
+(
+    Descriptor file_descriptor,
+    const void* buffer,
+    u64 buffer_size
+)
+{
+    s64 result;
+    asm volatile
+    (
+        "syscall"
+        : "=a"(result)
+        : "a"(1), "D"(file_descriptor), "S"(buffer), "d"(buffer_size)
+        : "rcx", "r11", "memory"
+    );
+    return result;
+}
+
+enum OpenFlag
+{
+    OpenFlagReadOnly = 0,
+    OpenFalgWriteOnly = 1,
+    OpenFlagReadWrite = 2,
+    OpenFlagCreate = 0x40,
+    OpenFlagExclusive = 0x80,
+    OpenFlagNoTty = 0x100,
+    OpenFlagTruncate = 0x200,
+    OpenFlagDirectory = 0x10000,
+    OpenFlagNoFollow = 0x20000,
+    OpenFlagTemporary = 0x410000,
+    OpenFlagCloseOnExecute = 0x80000,
+};
+
+static inline OpenFlag operator|(OpenFlag left, OpenFlag right)
+{
+    return (OpenFlag)((s32)left | (s32)right);
+}
+
+static inline Descriptor open
+(
+    const char* path,
+    OpenFlag flags,
+    s32 mode = 0
+)
+{
+    s32 result;
+    asm volatile
+    (
+        "syscall"
+        : "=a"(result)
+        : "a"(2), "D"(path), "S"(flags), "d"(mode)
+        : "rcx", "r11", "memory"
+    );
+    return result;
+}
+
+static inline s32 close(Descriptor file_descriptor)
+{
+    s32 result;
+    asm volatile
+    (
+        "syscall"
+        : "=a"(result)
+        : "a"(3), "D"(file_descriptor)
+        : "rcx", "r11", "memory"
+    );
+    return result;
+}
+
+struct stat_result
+{
+    u64 dev;
+    u64 ino;
+    u32 mode;
+    u64 nlink;
+    u32 uid;
+    u32 gid;
+    u64 rdev;
+    s64 size;
+    s64 atime;
+    s64 mtime;
+    s64 ctime;
+    s64 blksize;
+    s64 blocks;
+    u32 attr;
+};
+
+static inline s32 stat(const char* path, stat_result* stat_result_address)
+{
+    s32 result;
+    asm volatile
+    (
+        "syscall"
+        : "=a"(result)
+        :
+            "a"(4),
+            "D"(path),
+            "S"(stat_result_address)
+        : "rcx", "r11", "memory"
+    );
+    return result;
+}
+
+static inline s32 mprotect(void* start, u64 length, u64 protection)
+{
+    s32 result;
+    asm volatile
+    (
+        "syscall"
+        : "=a"(result)
+        :
+            "a"(10),
+            "D"(start),
+            "S"(length),
+            "d"(protection)
+        : "rcx", "r11", "memory"
+    );
+    return result;
+}
+
+static inline void* brk(void* new_break)
+{
+    void* result;
+    asm volatile
+    (
+        "syscall"
+        : "=a"(result)
+        : "a"(12), "D"(new_break)
+        : "rcx", "r11", "memory"
+    );
+    return result;
+}
+
+// possible domain values
+const s32 AF_UNIX = 1;
+const s32 AF_INET = 2;
+// possible type values
+const s32 SOCK_STREAM = 1;
+// pass protocol as zero
+static inline Descriptor socket(s32 domain, s32 type, s32 protocol)
+{
+    Descriptor result;
+    asm volatile
+    (
+        "syscall"
+        : "=a"(result)
+        : "a"(41), "D"(domain), "S"(type), "d"(protocol)
+        : "rcx", "r11", "memory"
+    );
+    return result;
+}
+
+#define IP(first, second, third, fourth) fourth << 24 \
+    | third << 16 \
+    | second << 8 \
+    | first
+
+typedef struct
+{
+    u16 family;
+    u16 port;
+    u16 address;
+    char zero[8];
+
+} SocketAddress;
+
+typedef struct
+{
+    u16 family;
+    char path[108];
+} UnixSocketAddress; // aka file socket
+
+static inline s32 connect
+(
+    Descriptor socket_descriptor,
+    void* socket_address,
+    u32 socket_address_size
+)
+{
+    s32 result;
+    asm volatile
+    (
+        "syscall"
+        : "=a"(result)
+        :
+            "a"(42),
+            "D"(socket_descriptor),
+            "S"(socket_address),
+            "d"(socket_address_size)
+        : "rcx", "r11", "memory"
+    );
+    return result;
+}
+
+static inline void exit(s64 exit_code)
+{
+    asm volatile
+    (
+        "syscall"
+        :
+        : "a"(60), "D"(exit_code)
+        :
+    );
+}

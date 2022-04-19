@@ -1,13 +1,11 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
 #include "integer.cpp"
+#include "syscalls.c"
+#include "c_string.cpp"
 #include "assert.cpp"
+#include "default_allocator.cpp"
+#include "memory.cpp"
 #include "string.cpp"
 #include "list.cpp"
 #include "option.cpp"
-#include "memory.cpp"
 #include "macros.cpp"
 #include "file_io.cpp"

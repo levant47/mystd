@@ -19,3 +19,27 @@ struct Option
         return result;
     }
 };
+
+template <typename TResult, typename TError>
+struct Result
+{
+    bool is_success;
+    TResult value;
+    TError error;
+
+    static Result<TResult, TError> fail(TError error)
+    {
+        Result<TResult, TError> result;
+        result.is_success = false;
+        result.error = error;
+        return result;
+    }
+
+    static Result<TResult, TError> success(TResult value)
+    {
+        Result<TResult, TError> result;
+        result.is_success = true;
+        result.value = value;
+        return result;
+    }
+};
