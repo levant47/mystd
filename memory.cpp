@@ -19,6 +19,15 @@ void reverse_memory(void* passed_source, u64 size)
     }
 }
 
+void set_memory(byte value, u64 size, void* passed_destination)
+{
+    auto destination = (byte*)passed_destination;
+    for (u64 i = 0; i < size; i++)
+    {
+        destination[i] = value;
+    }
+}
+
 template <typename T>
 T* copy_to_heap(T value)
 {

@@ -18,14 +18,23 @@ struct Option
         result.value = value;
         return result;
     }
+
+    T unwrap(CStringView error = nullptr)
+    {
+        assert(has_data, error ? error : "Option::unwrap failed");
+        return value;
+    }
 };
 
 template <typename TResult, typename TError>
 struct Result
 {
     bool is_success;
-    TResult value;
-    TError error;
+    union
+    {
+        TResult value;
+        TError error;
+    };
 
     static Result<TResult, TError> fail(TError error)
     {

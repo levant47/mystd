@@ -1,3 +1,6 @@
+// TODO: disabling struct padding doesn't work as of right now, we have to fix that,
+// and also disable padding for mystd (or maybe even globally for anyone who includes mystd)
+
 typedef s32 Descriptor;
 
 const Descriptor STDIN = 0;
@@ -91,7 +94,8 @@ static inline s32 close(Descriptor file_descriptor)
     return result;
 }
 
-struct stat_result
+// TODO: this structure is wrong (except for the size field)
+struct StatResult
 {
     u64 dev;
     u64 ino;
@@ -107,9 +111,10 @@ struct stat_result
     s64 blksize;
     s64 blocks;
     u32 attr;
+    byte zero[40];
 };
 
-static inline s32 stat(const char* path, stat_result* stat_result_address)
+static inline s32 stat(const char* path, StatResult* stat_result_address)
 {
     s32 result;
     asm volatile
@@ -155,13 +160,38 @@ static inline void* brk(void* new_break)
     return result;
 }
 
-// possible domain values
-const s32 AF_UNIX = 1;
-const s32 AF_INET = 2;
-// possible type values
-const s32 SOCK_STREAM = 1;
-// pass protocol as zero
-static inline Descriptor socket(s32 domain, s32 type, s32 protocol)
+struct SleepTime
+{
+    s64 seconds;
+    s64 nanoseconds;
+};
+
+static inline s32 nanosleep(SleepTime* requested, SleepTime* remaining = nullptr)
+{
+    s32 result;
+    asm volatile
+    (
+        "syscall"
+        : "=a"(result)
+        : "a"(35), "D"(requested), "S"(remaining)
+        : "rcx", "r11", "memory"
+    );
+    return result;
+}
+
+enum SocketDomain : u16
+{
+    SocketDomainUnix = 1,
+    SocketDomainInternet = 2,
+};
+
+enum SocketType
+{
+    SocketTypeTcp = 1,
+    SocketTypeUdp = 2,
+};
+
+static inline Descriptor socket(SocketDomain domain, SocketType type, s32 protocol = 0 /* unused */)
 {
     Descriptor result;
     asm volatile
@@ -179,26 +209,26 @@ static inline Descriptor socket(s32 domain, s32 type, s32 protocol)
     | second << 8 \
     | first
 
-typedef struct
+struct InternetSocketAddress
 {
-    u16 family;
+    SocketDomain family;
     u16 port;
     u16 address;
-    char zero[8];
+    byte zero[10];
 
-} SocketAddress;
+};
 
-typedef struct
+struct UnixSocketAddress
 {
-    u16 family;
+    SocketDomain family;
     char path[108];
-} UnixSocketAddress; // aka file socket
+};
 
 static inline s32 connect
 (
     Descriptor socket_descriptor,
     void* socket_address,
-    u32 socket_address_size
+    s32 socket_address_size
 )
 {
     s32 result;

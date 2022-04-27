@@ -4,6 +4,8 @@ byte* current_allocated = nullptr;
 byte* previous_allocated;
 const u64 ALLOCATION_BLOCK_SIZE = 4096;
 
+// TODO: do the linked list bookeping thing, malloc-style
+
 byte* default_allocate(u64 size)
 {
     assert(size != 0, "default_allocate: size was 0");

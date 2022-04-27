@@ -1,6 +1,6 @@
 Result<u64, s64> get_file_size(CStringView path)
 {
-    stat_result target_stat_result;
+    StatResult target_stat_result;
     auto error = stat(path, &target_stat_result);
     if (error != 0)
     {
