@@ -1,3 +1,3 @@
 set -ex
-g++ -Werror -nostdinc -nostdlib include.h -o build.o
+g++ -Werror -nostdinc -nostdlib include_linux.h -o build.o
 rm build.o
