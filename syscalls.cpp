@@ -130,6 +130,43 @@ static inline s32 stat(const char* path, StatResult* stat_result_address)
     return result;
 }
 
+enum PollEvent : u16
+{
+    PollEventDataAvailable = 1,
+    PollEventHangUp = 0x10, // cannot be requested, can only be returned
+};
+
+static inline PollEvent operator|(PollEvent left, PollEvent right)
+{
+    return (PollEvent)((u16)left | (u16)right);
+}
+
+#pragma pack(push, 1)
+struct PollParameter
+{
+    Descriptor descriptor;
+    PollEvent requested_events;
+    PollEvent returned_events;
+};
+#pragma pack(pop)
+
+static inline s32 poll(PollParameter* poll_parameters, u64 poll_parameters_count, s64 timeout)
+{
+    s32 result;
+    asm volatile
+    (
+        "syscall"
+        : "=a"(result)
+        :
+            "a"(7),
+            "D"(poll_parameters),
+            "S"(poll_parameters_count),
+            "d"(timeout)
+        : "rcx", "r11", "memory"
+    );
+    return result;
+}
+
 static inline s32 mprotect(void* start, u64 length, u64 protection)
 {
     s32 result;
