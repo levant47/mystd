@@ -13,3 +13,4 @@
 #include "option.cpp"
 #include "macros.cpp"
 #include "file_io_windows.cpp"
+#include "math/vector.cpp"

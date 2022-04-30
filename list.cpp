@@ -52,4 +52,9 @@ struct List
         }
         return false;
     }
+
+    void clear()
+    {
+        size = 0;
+    }
 };

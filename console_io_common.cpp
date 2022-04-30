@@ -10,6 +10,11 @@ void print(CStringView string)
     print(string, get_c_string_length(string));
 }
 
+void print(char c)
+{
+    print(&c, 1);
+}
+
 template <typename T1, typename T2>
 void print(T1 arg1, T2 arg2)
 {
