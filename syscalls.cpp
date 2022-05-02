@@ -150,6 +150,8 @@ struct PollParameter
 };
 #pragma pack(pop)
 
+s64 POLL_TIMEOUT_RETURN_IMMEDIATELY = 0;
+
 static inline s32 poll(PollParameter* poll_parameters, u64 poll_parameters_count, s64 timeout)
 {
     s32 result;
