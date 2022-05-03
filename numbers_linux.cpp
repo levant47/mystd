@@ -7,3 +7,23 @@ typedef __INT32_TYPE__ s32;
 typedef __INT16_TYPE__ s16;
 typedef __INT8_TYPE__ s8;
 typedef char byte;
+
+template <typename T>
+T min(T left, T right)
+{
+    if (left < right)
+    {
+        return left;
+    }
+    return right;
+}
+
+template <typename T>
+T max(T left, T right)
+{
+    if (left > right)
+    {
+        return left;
+    }
+    return right;
+}

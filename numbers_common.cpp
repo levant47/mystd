@@ -30,23 +30,3 @@ u64 number_to_string(u64 value, char* buffer)
 
     return size;
 }
-
-template <typename T>
-T min(T left, T right)
-{
-    if (left < right)
-    {
-        return left;
-    }
-    return right;
-}
-
-template <typename T>
-T max(T left, T right)
-{
-    if (left > right)
-    {
-        return left;
-    }
-    return right;
-}
