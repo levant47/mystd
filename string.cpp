@@ -148,5 +148,5 @@ String number_to_string(u32 number)
 
 void print(String string)
 {
-    print(string.data, string.size);
+    print_buffer(string.data, string.size);
 }
