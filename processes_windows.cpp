@@ -20,11 +20,11 @@ PROCESS_INFORMATION start_process(CString app_path, CString arguments = nullptr,
     auto success = CreateProcessA(
         app_path,
         arguments,
-        NULL,
-        NULL,
+        nullptr,
+        nullptr,
         false,
         0,
-        NULL,
+        nullptr,
         directory,
         &startup_info,
         &process_info
@@ -52,3 +52,55 @@ PROCESS_INFORMATION start_cmd(CStringView command, CString directory = nullptr)
     cmd_arguments.deallocate();
     return process;
 }
+
+PROCESS_INFORMATION start_cmd_without_window(CStringView command, CString directory = nullptr)
+{
+    auto cmd_arguments = String::allocate();
+    cmd_arguments.push("/C \"");
+    cmd_arguments.push(command);
+    cmd_arguments.push('"');
+    cmd_arguments.push('\0');
+
+    STARTUPINFOA startup_info;
+    set_memory(0, sizeof(startup_info), (char*)&startup_info);
+    startup_info.cb = sizeof(startup_info);
+    startup_info.dwFlags = STARTF_USESHOWWINDOW;
+    startup_info.wShowWindow = SW_HIDE;
+    PROCESS_INFORMATION process_info;
+    auto success = CreateProcessA(
+        CMD_PATH,
+        cmd_arguments.data,
+        nullptr,
+        nullptr,
+        false,
+        0,
+        nullptr,
+        directory,
+        &startup_info,
+        &process_info
+    );
+    assert_winapi(success, "CreateProcess");
+
+    cmd_arguments.deallocate();
+
+    return process_info;
+}
+
+HANDLE start_thread(LPTHREAD_START_ROUTINE proc, void* parameter = nullptr)
+{
+    return CreateThread(
+        nullptr, // default security attributes
+        0, // default stack size
+        proc,
+        parameter,
+        0, // default creation flags
+        nullptr // do not store thread ID
+    );
+}
+
+void complete_thread(HANDLE thread_handle)
+{
+    WaitForSingleObject(thread_handle, INFINITE);
+    CloseHandle(thread_handle);
+}
+

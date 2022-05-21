@@ -58,3 +58,18 @@ struct List
         size = 0;
     }
 };
+
+template <typename T>
+struct ListView
+{
+    u64 size;
+    T* data;
+
+    static ListView<T> construct(u64 size, T* data)
+    {
+        ListView result;
+        result.size = size;
+        result.data = data;
+        return result;
+    }
+};

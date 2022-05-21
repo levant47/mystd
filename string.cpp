@@ -1,3 +1,25 @@
+struct StringView
+{
+    u64 size;
+    const char* data;
+
+    static StringView construct(u64 size, CStringView data)
+    {
+        StringView result;
+        result.size = size;
+        result.data = data;
+        return result;
+    }
+
+    static StringView from_c_string(CStringView source)
+    {
+        StringView result;
+        result.size = get_c_string_length(source);
+        result.data = source;
+        return result;
+    }
+};
+
 struct String
 {
     u64 capacity;
@@ -23,6 +45,13 @@ struct String
         {
             result.push(source[i]);
         }
+        return result;
+    }
+
+    static String from_number(u64 value, u64 base = 10)
+    {
+        auto result = allocate(64);
+        result.size = number_to_string(value, result.data, base);
         return result;
     }
 
@@ -72,6 +101,24 @@ struct String
         for (u64 i = 0; i < other_string.size; i++)
         {
             push(other_string.data[i]);
+        }
+    }
+
+    void push(u64 number, u64 base = 10)
+    {
+        char buffer[20];
+        auto digits_count = number_to_string(number, buffer, base);
+        for (u64 i = 0; i < digits_count; i++)
+        {
+            push(buffer[i]);
+        }
+    }
+
+    void push(StringView source)
+    {
+        for (u64 i = 0; i < source.size; i++)
+        {
+            push(source.data[i]);
         }
     }
 
@@ -128,22 +175,6 @@ bool operator==(String left, const char* right)
 bool operator!=(String left, const char* right)
 {
     return !(left == right);
-}
-
-String number_to_string(u32 number)
-{
-    auto result = String::allocate();
-
-    do
-    {
-        result.push((number % 10) + '0');
-        number /= 10;
-    }
-    while (number != 0);
-
-    result.reverse();
-
-    return result;
 }
 
 void print(String string)

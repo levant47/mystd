@@ -21,7 +21,7 @@ void assert_gui(bool condition, const char* user_message)
     {
         return;
     }
-    MessageBox(NULL, user_message, "Assertion faield", MB_OK);
+    MessageBox(NULL, user_message, "Assertion failed", MB_OK);
     ExitProcess(1);
 }
 
