@@ -1,4 +1,19 @@
 template <typename T>
+struct ListView
+{
+    u64 size;
+    T* data;
+
+    static ListView<T> construct(u64 size, T* data)
+    {
+        ListView result;
+        result.size = size;
+        result.data = data;
+        return result;
+    }
+};
+
+template <typename T>
 struct List
 {
     u64 capacity;
@@ -35,6 +50,14 @@ struct List
         size++;
     }
 
+    void push(ListView<T> source)
+    {
+        for (u64 i = 0; i < source.size; i++)
+        {
+            push(source.data[i]);
+        }
+    }
+
     void pop()
     {
         assert(size != 0);
@@ -56,20 +79,5 @@ struct List
     void clear()
     {
         size = 0;
-    }
-};
-
-template <typename T>
-struct ListView
-{
-    u64 size;
-    T* data;
-
-    static ListView<T> construct(u64 size, T* data)
-    {
-        ListView result;
-        result.size = size;
-        result.data = data;
-        return result;
     }
 };
