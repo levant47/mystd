@@ -15,7 +15,7 @@ void assert(bool condition, const char* user_message = nullptr)
     ExitProcess(1);
 }
 
-void assert_gui(bool condition, const char* user_message)
+static void assert_gui(bool condition, const char* user_message)
 {
     if (condition)
     {
@@ -46,7 +46,7 @@ void assert_winapi(bool condition, CStringView function_name)
     ExitProcess(1);
 }
 
-void assert_winapi_gui(bool condition, CString function_name)
+static void assert_winapi_gui(bool condition, CString function_name)
 {
     if (condition)
     {

@@ -62,7 +62,7 @@ PROCESS_INFORMATION start_cmd_without_window(CStringView command, CString direct
     cmd_arguments.push('\0');
 
     STARTUPINFOA startup_info;
-    set_memory(0, sizeof(startup_info), (char*)&startup_info);
+    set_memory(0, sizeof(startup_info), &startup_info);
     startup_info.cb = sizeof(startup_info);
     startup_info.dwFlags = STARTF_USESHOWWINDOW;
     startup_info.wShowWindow = SW_HIDE;
@@ -104,3 +104,33 @@ void complete_thread(HANDLE thread_handle)
     CloseHandle(thread_handle);
 }
 
+// If the function succeeds, the return value is nonzero.
+// If the function fails, the return value is zero. To get extended error information, call GetLastError.
+bool kill_thread(HANDLE thread_handle) { return TerminateThread(thread_handle, 0); }
+
+// kills the first process it finds with the provided name;
+// returns false if no process with such name was found and true otherwise
+bool kill_process_by_name(CString name, u32 exit_code = 1)
+{
+    auto snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    PROCESSENTRY32 process_info;
+    process_info.dwSize = sizeof(process_info);
+    bool process_killed = false;
+    while (Process32Next(snapshot, &process_info))
+    {
+        if (c_string_equal(name, process_info.szExeFile))
+        {
+            auto target_process_handle = OpenProcess(
+                /* dwDesiredAccess: */ PROCESS_TERMINATE,
+                /* bInheritHandle: */ false,
+               process_info.th32ProcessID
+            );
+            auto success = TerminateProcess(target_process_handle, exit_code);
+            CloseHandle(target_process_handle);
+            process_killed = success != 0;
+            break;
+        }
+    }
+    CloseHandle(snapshot);
+    return process_killed;
+}

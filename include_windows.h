@@ -1,4 +1,5 @@
-#include <windows.h>
+#include <Windows.h>
+#include <TlHelp32.h>
 #include "numbers_windows.cpp"
 #include "numbers_common.cpp"
 #include "memory.cpp"
@@ -15,3 +16,4 @@
 #include "file_io_windows.cpp"
 #include "math/vector.cpp"
 #include "processes_windows.cpp"
+#include "user_input_windows.cpp"
