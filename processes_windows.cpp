@@ -1,6 +1,11 @@
 CString CMD_PATH = "C:\\Windows\\System32\\cmd.exe";
 
-PROCESS_INFORMATION start_process(CString app_path, CString arguments = nullptr, CString directory = nullptr)
+PROCESS_INFORMATION start_process(
+    CString app_path,
+    CString arguments = nullptr,
+    CString directory = nullptr,
+    CStringView environment = nullptr
+)
 {
     if (directory != nullptr)
     {
@@ -24,7 +29,7 @@ PROCESS_INFORMATION start_process(CString app_path, CString arguments = nullptr,
         nullptr,
         false,
         0,
-        nullptr,
+        (void*)environment,
         directory,
         &startup_info,
         &process_info
@@ -34,21 +39,24 @@ PROCESS_INFORMATION start_process(CString app_path, CString arguments = nullptr,
     return process_info;
 }
 
-void complete(PROCESS_INFORMATION process_info)
+u64 complete(PROCESS_INFORMATION process_info)
 {
     WaitForSingleObject(process_info.hProcess, INFINITE);
+    u64 exit_code;
+    GetExitCodeProcess(process_info.hProcess, &exit_code);
     CloseHandle(process_info.hProcess);
     CloseHandle(process_info.hThread);
+    return exit_code;
 }
 
-PROCESS_INFORMATION start_cmd(CStringView command, CString directory = nullptr)
+PROCESS_INFORMATION start_cmd(CStringView command, CString directory = nullptr, CStringView environment = nullptr)
 {
     auto cmd_arguments = String::allocate();
     cmd_arguments.push("/C \"");
     cmd_arguments.push(command);
     cmd_arguments.push('"');
     cmd_arguments.push('\0');
-    auto process = start_process(CMD_PATH, cmd_arguments.data, directory);
+    auto process = start_process(CMD_PATH, cmd_arguments.data, directory, environment);
     cmd_arguments.deallocate();
     return process;
 }
@@ -106,7 +114,11 @@ void complete_thread(HANDLE thread_handle)
 
 // If the function succeeds, the return value is nonzero.
 // If the function fails, the return value is zero. To get extended error information, call GetLastError.
-bool kill_thread(HANDLE thread_handle) { return TerminateThread(thread_handle, 0); }
+bool kill_thread(HANDLE thread_handle, u32 exit_code = 1) { return TerminateThread(thread_handle, exit_code); }
+
+// If the function succeeds, the return value is nonzero.
+// If the function fails, the return value is zero. To get extended error information, call GetLastError.
+bool kill_process(HANDLE process_handle, u32 exit_code = 1) { return TerminateProcess(process_handle, exit_code); }
 
 // kills the first process it finds with the provided name;
 // returns false if no process with such name was found and true otherwise
@@ -125,12 +137,12 @@ bool kill_process_by_name(CString name, u32 exit_code = 1)
                 /* bInheritHandle: */ false,
                process_info.th32ProcessID
             );
-            auto success = TerminateProcess(target_process_handle, exit_code);
+            process_killed = kill_process(target_process_handle, exit_code);
             CloseHandle(target_process_handle);
-            process_killed = success != 0;
             break;
         }
     }
     CloseHandle(snapshot);
     return process_killed;
 }
+

@@ -17,3 +17,4 @@
 #include "math/vector.cpp"
 #include "processes_windows.cpp"
 #include "user_input_windows.cpp"
+#include "environment_windows.cpp"

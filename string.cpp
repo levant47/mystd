@@ -1,3 +1,5 @@
+char to_lower(char c) { return c >= 'A' && c <= 'Z' ? c + ('a' - 'A') : c; }
+
 struct StringView
 {
     u64 size;
@@ -122,10 +124,10 @@ struct String
         }
     }
 
-    void pop()
+    void pop(u64 count = 1)
     {
-        assert(size != 0);
-        size--;
+        assert(size >= count);
+        size -= count;
     }
 
     void reverse()
@@ -140,6 +142,8 @@ struct String
         pop();
         return data;
     }
+
+    void clear() { size = 0; }
 };
 
 bool operator==(String left, String right)
