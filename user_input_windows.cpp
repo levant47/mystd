@@ -1,4 +1,4 @@
-void hold(int code)
+static void hold(int code)
 {
     INPUT key_press;
     set_memory(0, sizeof(key_press), &key_press);
@@ -7,7 +7,7 @@ void hold(int code)
     SendInput(1, &key_press, sizeof(INPUT));
 }
 
-void release(int code)
+static void release(int code)
 {
     INPUT key_release;
     set_memory(0, sizeof(key_release), &key_release);
@@ -17,14 +17,14 @@ void release(int code)
     SendInput(1, &key_release, sizeof(INPUT));
 }
 
-void press(int code)
+static void press(int code)
 {
     hold(code);
     Sleep(100);
     release(code);
 }
 
-void click_on(u16 x, u16 y)
+static void click_on(u16 x, u16 y)
 {
     u16 SCREEN_WIDTH = 1920;
     u16 SCREEN_HEIGHT = 1080;
@@ -47,7 +47,7 @@ void click_on(u16 x, u16 y)
     assert_winapi(send_input_result == ARRAY_SIZE(inputs), "SendInput");
 }
 
-bool char_requires_shift(char c)
+static bool char_requires_shift(char c)
 {
     return c >= 'A' && c <= 'Z'
         || c == '!'
@@ -57,10 +57,11 @@ bool char_requires_shift(char c)
         || c == '>'
         || c == '&'
         || c == '?'
+        || c == '%'
     ;
 }
 
-u16 char_to_vk_code(char c)
+static u16 char_to_vk_code(char c)
 {
     if (c >= 'A' && c <= 'Z' || c >= '1' && c <= '9')
     {
@@ -102,9 +103,13 @@ u16 char_to_vk_code(char c)
     {
         return VK_TAB;
     }
-    if (c == '>')
+    if (c == '.' || c == '>')
     {
         return VK_OEM_PERIOD;
+    }
+    if (c == '%')
+    {
+        return '5';
     }
     if (c == '&')
     {
@@ -123,9 +128,8 @@ u16 char_to_vk_code(char c)
     return {};
 }
 
-void type_in(CStringView text)
+static void type_in(CStringView text)
 {
-    auto inputs = List<INPUT>::allocate();
     for (u64 i = 0; text[i] != '\0'; i++)
     {
         if (char_requires_shift(text[i]))
@@ -135,7 +139,8 @@ void type_in(CStringView text)
             shift_press.type = INPUT_KEYBOARD;
             shift_press.ki.wVk = VK_SHIFT;
 
-            inputs.push(shift_press);
+            SendInput(1, &shift_press, sizeof(INPUT));
+            Sleep(30);
         }
 
         INPUT key_press;
@@ -143,7 +148,8 @@ void type_in(CStringView text)
         key_press.type = INPUT_KEYBOARD;
         key_press.ki.wVk = char_to_vk_code(text[i]);
 
-        inputs.push(key_press);
+        SendInput(1, &key_press, sizeof(INPUT));
+        Sleep(30);
 
         INPUT key_release;
         set_memory(0, sizeof(key_release), &key_release);
@@ -151,7 +157,8 @@ void type_in(CStringView text)
         key_release.ki.wVk = char_to_vk_code(text[i]);
         key_release.ki.dwFlags = KEYEVENTF_KEYUP;
 
-        inputs.push(key_release);
+        SendInput(1, &key_release, sizeof(INPUT));
+        Sleep(30);
 
         if (char_requires_shift(text[i]))
         {
@@ -161,15 +168,13 @@ void type_in(CStringView text)
             shift_release.ki.wVk = VK_SHIFT;
             shift_release.ki.dwFlags = KEYEVENTF_KEYUP;
 
-            inputs.push(shift_release);
+            SendInput(1, &shift_release, sizeof(INPUT));
+            Sleep(30);
         }
     }
-
-    auto send_input_result = SendInput(inputs.size, inputs.data, sizeof(INPUT));
-    assert_winapi(send_input_result == inputs.size, "SendInput");
 }
 
-void type_in(char c)
+static void type_in(char c)
 {
     auto string = String::allocate();
     string.push(c);

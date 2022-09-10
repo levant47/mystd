@@ -1,4 +1,4 @@
-Option<u64> get_file_size(CStringView path)
+static Option<u64> get_file_size(CStringView path)
 {
     auto target_file_handle = CreateFileA(
         path,
@@ -18,7 +18,7 @@ Option<u64> get_file_size(CStringView path)
     return Option<u64>::construct(target_file_size);
 }
 
-Option<String> read_whole_file(CStringView path)
+static Option<String> read_whole_file(CStringView path)
 {
     auto target_file_handle = CreateFileA(
         path,
@@ -41,7 +41,7 @@ Option<String> read_whole_file(CStringView path)
     return Option<String>::construct(contents);
 }
 
-bool write_whole_file(String data, CStringView path)
+static bool write_whole_file(String data, CStringView path)
 {
     auto target_file_handle = CreateFileA(
         path,
@@ -68,7 +68,7 @@ bool write_whole_file(String data, CStringView path)
 // argument is fully qualified name of the directory being deleted, without
 // trailing backslash and double null-terminated;
 // returns true if successful and false otherwise
-bool delete_directory(CString path)
+static bool delete_directory(CStringView path)
 { // https://stackoverflow.com/a/218636
     // TODO: explain
     SHFILEOPSTRUCT operation;
@@ -84,8 +84,10 @@ bool delete_directory(CString path)
     return error == 0;
 }
 
+static bool delete_file(CStringView path) { return DeleteFileA(path); }
+
 // both arguments have to be double null-terminated
-bool copy_directory(CString from, CString to)
+static bool copy_directory(CString from, CString to)
 { // https://stackoverflow.com/a/4725137
     // TODO: explain
     SHFILEOPSTRUCT operation;
@@ -99,4 +101,16 @@ bool copy_directory(CString from, CString to)
     operation.lpszProgressTitle = "";
     auto error = SHFileOperation(&operation);
     return error == 0;
+}
+
+static bool directory_exists(CStringView path)
+{
+    auto dwAttrib = GetFileAttributes(path);
+    return dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
+}
+
+static bool file_exists(CStringView path)
+{
+    auto dwAttrib = GetFileAttributes(path);
+    return dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }

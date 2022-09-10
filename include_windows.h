@@ -1,4 +1,5 @@
 #include <Windows.h>
+#include <WinDNS.h>
 #include <TlHelp32.h>
 #include "numbers_windows.cpp"
 #include "numbers_common.cpp"

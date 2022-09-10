@@ -1,7 +1,7 @@
 typedef char* CString;
 typedef const char* CStringView;
 
-u64 get_c_string_length(CStringView source)
+static u64 get_c_string_length(CStringView source)
 {
     u64 i = 0;
     while (source[i] != '\0')
@@ -11,7 +11,7 @@ u64 get_c_string_length(CStringView source)
     return i;
 }
 
-bool c_string_equal(CStringView left, CStringView right)
+static bool c_string_equal(CStringView left, CStringView right)
 {
     u64 i = 0;
     while (true)
@@ -28,7 +28,7 @@ bool c_string_equal(CStringView left, CStringView right)
     }
 }
 
-bool starts_with(CString target, CString source)
+static bool starts_with(CString target, CString source)
 {
     for (u64 i = 0; target[i] != '\0'; i++)
     {
@@ -40,7 +40,7 @@ bool starts_with(CString target, CString source)
     return true;
 }
 
-bool contains(CString target, CString source)
+static bool contains(CString target, CString source)
 {
     auto target_length = get_c_string_length(target);
     auto source_length = get_c_string_length(source);

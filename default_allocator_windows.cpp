@@ -1,7 +1,7 @@
 bool default_allocator_initialized = false;
 HANDLE process_heap;
 
-byte* default_allocate(u64 size)
+static byte* default_allocate(u64 size)
 {
     if (!default_allocator_initialized)
     {
@@ -14,7 +14,7 @@ byte* default_allocate(u64 size)
     return result;
 }
 
-void default_deallocate(void* address)
+static void default_deallocate(void* address)
 {
     assert(default_allocator_initialized, "default_deallocate: default allocator has not been initialized");
 
@@ -22,7 +22,7 @@ void default_deallocate(void* address)
     assert(free_result != 0, "default_deallocate: failed to deallocate memory");
 }
 
-byte* default_reallocate(void* old_address, u64 old_size, u64 new_size)
+static byte* default_reallocate(void* old_address, u64 old_size, u64 new_size)
 {
     assert(default_allocator_initialized, "default_reallocate: default allocator has not been initialized");
 

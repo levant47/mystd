@@ -1,4 +1,4 @@
-String get_environment_strings()
+static String get_environment_strings()
 {
     auto result = String::allocate();
     auto environment = GetEnvironmentStringsA();
@@ -7,7 +7,7 @@ String get_environment_strings()
     return result;
 }
 
-Option<String> get_environment_variable(CString environment_variable_name)
+static Option<String> get_environment_variable(CString environment_variable_name)
 {
     // this size includes null-terminator
     u64 environment_variable_size = GetEnvironmentVariableA(environment_variable_name, nullptr, 0);

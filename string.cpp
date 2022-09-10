@@ -1,4 +1,4 @@
-char to_lower(char c) { return c >= 'A' && c <= 'Z' ? c + ('a' - 'A') : c; }
+static char to_lower(char c) { return c >= 'A' && c <= 'Z' ? c + ('a' - 'A') : c; }
 
 struct StringView
 {
@@ -130,23 +130,22 @@ struct String
         size -= count;
     }
 
-    void reverse()
-    {
-        reverse_memory(data, size);
-    }
+    void reverse() { reverse_memory(data, size); }
 
-    // for use in a debugger
-    char* debug()
-    {
-        push('\0');
-        pop();
-        return data;
-    }
+    void make_c_string_compatible() { push('\0'); pop(); }
 
     void clear() { size = 0; }
+
+    StringView to_string_view() { return StringView::construct(size, data); }
+
+    void reserve_at_least(u64 new_capacity)
+    {
+        data = (char*)default_reallocate(data, capacity * sizeof(char), new_capacity * sizeof(char));
+        capacity = new_capacity;
+    }
 };
 
-bool operator==(String left, String right)
+static bool operator==(String left, String right)
 {
     if (left.size != right.size)
     {
@@ -162,7 +161,7 @@ bool operator==(String left, String right)
     return true;
 }
 
-bool operator==(String left, const char* right)
+static bool operator==(String left, const char* right)
 {
     u64 i = 0;
     while (i != left.size && right[i] != '\0')
@@ -176,12 +175,12 @@ bool operator==(String left, const char* right)
     return i == left.size && right[i] == '\0';
 }
 
-bool operator!=(String left, const char* right)
+static bool operator!=(String left, const char* right)
 {
     return !(left == right);
 }
 
-void print(String string)
+static void print(String string)
 {
     print_buffer(string.data, string.size);
 }

@@ -1,10 +1,10 @@
-void assert(bool condition, const char* user_message = nullptr)
+static void assert(bool condition, const char* user_message = nullptr)
 {
     if (condition)
     {
         return;
     }
-    __debugbreak();
+    if (IsDebuggerPresent()) { __debugbreak(); }
     if (user_message == nullptr)
     {
         print("Assertion failed\n");
@@ -22,12 +22,12 @@ static void assert_gui(bool condition, const char* user_message)
     {
         return;
     }
-    __debugbreak();
+    if (IsDebuggerPresent()) { __debugbreak(); }
     MessageBox(NULL, user_message, "Assertion failed", MB_OK);
     ExitProcess(1);
 }
 
-void assert_winapi(bool condition, CStringView function_name)
+static void assert_winapi(bool condition, CStringView function_name)
 {
     if (condition)
     {
@@ -44,12 +44,12 @@ void assert_winapi(bool condition, CStringView function_name)
         0,
         NULL
     );
-    __debugbreak();
+    if (IsDebuggerPresent()) { __debugbreak(); }
     print(function_name, " failed: ", error_message, "\n");
     ExitProcess(1);
 }
 
-static void assert_winapi_gui(bool condition, CString function_name)
+static void assert_winapi_gui(bool condition, CString function_name = nullptr)
 {
     if (condition)
     {
@@ -66,7 +66,7 @@ static void assert_winapi_gui(bool condition, CString function_name)
         0,
         NULL
     );
-    __debugbreak();
+    if (IsDebuggerPresent()) { __debugbreak(); }
     MessageBox(NULL, error_message, "WinAPI error", MB_OK);
     ExitProcess(1);
 }

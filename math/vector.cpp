@@ -14,13 +14,13 @@ struct Vector2
 };
 
 template <typename T>
-void print(Vector2<T> vector)
+static void print(Vector2<T> vector)
 {
     print("(", vector.x, ", ", vector.y, ")");
 }
 
 template <typename T>
-Vector2<T> operator+(Vector2<T> left, Vector2<T> right)
+static Vector2<T> operator+(Vector2<T> left, Vector2<T> right)
 {
     Vector2<T> result;
     result.x = left.x + right.x;
@@ -29,13 +29,13 @@ Vector2<T> operator+(Vector2<T> left, Vector2<T> right)
 }
 
 template <typename T>
-Vector2<T> operator+(Vector2<T> left, T right)
+static Vector2<T> operator+(Vector2<T> left, T right)
 {
     return left + Vector2<T>::construct(right, right);
 }
 
 template <typename T>
-Vector2<T> operator+(T left, Vector2<T> right)
+static Vector2<T> operator+(T left, Vector2<T> right)
 {
     return Vector2<T>::construct(left, left) + right;
 }
