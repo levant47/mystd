@@ -38,4 +38,11 @@ static u64 number_to_string(u64 value, char* buffer, u64 base = 10)
     return size;
 }
 
+static s64 number_to_string(s64 value, char* buffer, u64 base = 10)
+{
+    if (value >= 0) { return number_to_string((u64)value, buffer, base); }
+    buffer[0] = '-';
+    return number_to_string((u64)-value, buffer + 1, base) + 1;
+}
+
 static bool is_between(u64 start, u64 end, u64 value) { return value >= start && value < end; }

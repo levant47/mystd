@@ -3,15 +3,17 @@ struct Vector2
 {
     T x;
     T y;
-
-    static Vector2 construct(T x, T y)
-    {
-        Vector2 result;
-        result.x = x;
-        result.y = y;
-        return result;
-    }
 };
+
+
+template <typename T>
+static Vector2<T> make_vector2(T x, T y)
+{
+    Vector2<T> result;
+    result.x = x;
+    result.y = y;
+    return result;
+}
 
 template <typename T>
 static void print(Vector2<T> vector)
@@ -31,11 +33,11 @@ static Vector2<T> operator+(Vector2<T> left, Vector2<T> right)
 template <typename T>
 static Vector2<T> operator+(Vector2<T> left, T right)
 {
-    return left + Vector2<T>::construct(right, right);
+    return left + make_vector2(right, right);
 }
 
 template <typename T>
 static Vector2<T> operator+(T left, Vector2<T> right)
 {
-    return Vector2<T>::construct(left, left) + right;
+    return make_vector2(left, left) + right;
 }

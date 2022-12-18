@@ -1,24 +1,13 @@
-CString CMD_PATH = "C:\\Windows\\System32\\cmd.exe";
+const char* CMD_PATH = "C:\\Windows\\System32\\cmd.exe";
 
 static PROCESS_INFORMATION start_process(
-    CString app_path,
-    CString arguments = nullptr,
-    CString directory = nullptr,
-    CStringView environment = nullptr,
+    const char* app_path,
+    char* arguments = nullptr,
+    const char* directory = nullptr,
+    const char* environment = nullptr,
     HANDLE output_pipe = nullptr
 )
 {
-    if (directory != nullptr)
-    {
-        print(directory, ">");
-    }
-    print(app_path);
-    if (arguments != nullptr)
-    {
-        print(" ", arguments);
-    }
-    print("\n");
-
     STARTUPINFOA startup_info;
     set_memory(0, sizeof(startup_info), (char*)&startup_info);
     startup_info.cb = sizeof(startup_info);
@@ -57,17 +46,17 @@ static u64 complete(PROCESS_INFORMATION process_info)
 }
 
 static PROCESS_INFORMATION start_cmd(
-    CStringView command,
-    CString directory = nullptr,
-    CStringView environment = nullptr,
+    const char* command,
+    const char* directory = nullptr,
+    const char* environment = nullptr,
     HANDLE output_pipe = nullptr
 )
 {
-    auto cmd_arguments = String::allocate();
-    cmd_arguments.push("/C \"");
-    cmd_arguments.push(command);
-    cmd_arguments.push('"');
-    cmd_arguments.push('\0');
+    auto cmd_arguments = allocate_string();
+    push("/C \"", &cmd_arguments);
+    push(command, &cmd_arguments);
+    push('"', &cmd_arguments);
+    push('\0', &cmd_arguments);
     auto process = start_process(
         CMD_PATH,
         cmd_arguments.data,
@@ -75,17 +64,17 @@ static PROCESS_INFORMATION start_cmd(
         environment,
         output_pipe
     );
-    cmd_arguments.deallocate();
+    deallocate(cmd_arguments);
     return process;
 }
 
-static PROCESS_INFORMATION start_cmd_without_window(CStringView command, CString directory = nullptr)
+static PROCESS_INFORMATION start_cmd_without_window(const char* command, const char* directory = nullptr)
 {
-    auto cmd_arguments = String::allocate();
-    cmd_arguments.push("/C \"");
-    cmd_arguments.push(command);
-    cmd_arguments.push('"');
-    cmd_arguments.push('\0');
+    auto cmd_arguments = allocate_string();
+    push("/C \"", &cmd_arguments);
+    push(command, &cmd_arguments);
+    push('"', &cmd_arguments);
+    push('\0', &cmd_arguments);
 
     STARTUPINFOA startup_info;
     set_memory(0, sizeof(startup_info), &startup_info);
@@ -107,7 +96,7 @@ static PROCESS_INFORMATION start_cmd_without_window(CStringView command, CString
     );
     assert_winapi(success, "CreateProcess");
 
-    cmd_arguments.deallocate();
+    deallocate(cmd_arguments);
 
     return process_info;
 }
@@ -140,7 +129,7 @@ static bool kill_process(HANDLE process_handle, u32 exit_code = 1) { return Term
 
 // kills the first process it finds with the provided name;
 // returns false if no process with such name was found and true otherwise
-static bool kill_process_by_name(CString name, u32 exit_code = 1)
+static bool kill_process_by_name(char* name, u32 exit_code = 1)
 {
     auto snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     PROCESSENTRY32 process_info;
@@ -192,7 +181,7 @@ void read_to_string(String* output, HANDLE input_stream)
     // TODO: error handling
     u64 bytes_to_read;
     PeekNamedPipe(input_stream, nullptr, 0, nullptr, &bytes_to_read, nullptr);
-    output->reserve_at_least(output->size + bytes_to_read);
+    reserve_at_least(output->size + bytes_to_read, output);
     u64 bytes_read;
     ReadFile(
         input_stream,

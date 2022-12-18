@@ -1,4 +1,4 @@
-Option<u64> get_file_size(CStringView path)
+Option<u64> get_file_size(const char* path)
 {
     StatResult target_stat_result;
     auto error = stat(path, &target_stat_result);
@@ -9,7 +9,7 @@ Option<u64> get_file_size(CStringView path)
     return Option<u64>::construct((u64)target_stat_result.size);
 }
 
-Option<String> read_whole_file(CStringView path)
+Option<String> read_whole_file(const char* path)
 {
     auto file_size_result = get_file_size(path);
     if (!file_size_result.has_data) { return Option<String>::empty(); }

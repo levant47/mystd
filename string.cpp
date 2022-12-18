@@ -4,146 +4,157 @@ struct StringView
 {
     u64 size;
     const char* data;
-
-    static StringView construct(u64 size, CStringView data)
-    {
-        StringView result;
-        result.size = size;
-        result.data = data;
-        return result;
-    }
-
-    static StringView from_c_string(CStringView source)
-    {
-        StringView result;
-        result.size = get_c_string_length(source);
-        result.data = source;
-        return result;
-    }
 };
+
+static StringView make_string_view(u64 size, const char* data)
+{
+    StringView result;
+    result.size = size;
+    result.data = data;
+    return result;
+}
+
+static StringView make_string_view(const char* source)
+{
+    StringView result;
+    result.size = get_length(source);
+    result.data = source;
+    return result;
+}
 
 struct String
 {
     u64 capacity;
     u64 size;
     char* data;
-
-    static const u64 DEFAULT_CAPACITY = 16;
-
-    static String allocate(u64 capacity = DEFAULT_CAPACITY)
-    {
-        String result;
-        result.capacity = capacity;
-        result.size = 0;
-        result.data = (char*)default_allocate(sizeof(char) * result.capacity);
-        return result;
-    }
-
-    static String copy_from_c_string(const char* source)
-    {
-        auto source_length = get_c_string_length(source);
-        auto result = allocate(source_length);
-        for (u64 i = 0; i < source_length; i++)
-        {
-            result.push(source[i]);
-        }
-        return result;
-    }
-
-    static String from_number(u64 value, u64 base = 10)
-    {
-        auto result = allocate(64);
-        result.size = number_to_string(value, result.data, base);
-        return result;
-    }
-
-    String copy()
-    {
-        String result;
-        result.capacity = capacity;
-        result.size = size;
-        result.data = (char*)default_allocate(sizeof(char) * capacity);
-        for (u64 i = 0; i < size; i++)
-        {
-            result.data[i] = data[i];
-        }
-        return result;
-    }
-
-    void deallocate()
-    {
-        assert(capacity != 0);
-        default_deallocate(data);
-        capacity = 0;
-    }
-
-    void push(char c)
-    {
-        if (size == capacity)
-        {
-            assert(capacity != 0);
-            auto new_capacity = capacity * 2;
-            data = (char*)default_reallocate(data, capacity * sizeof(char), new_capacity * sizeof(char));
-            capacity *= 2;
-        }
-        data[size] = c;
-        size++;
-    }
-
-    void push(const char* c_string)
-    {
-        for (u64 i = 0; c_string[i] != '\0'; i++)
-        {
-            push(c_string[i]);
-        }
-    }
-
-    void push(String other_string)
-    {
-        for (u64 i = 0; i < other_string.size; i++)
-        {
-            push(other_string.data[i]);
-        }
-    }
-
-    void push(u64 number, u64 base = 10)
-    {
-        char buffer[20];
-        auto digits_count = number_to_string(number, buffer, base);
-        for (u64 i = 0; i < digits_count; i++)
-        {
-            push(buffer[i]);
-        }
-    }
-
-    void push(StringView source)
-    {
-        for (u64 i = 0; i < source.size; i++)
-        {
-            push(source.data[i]);
-        }
-    }
-
-    void pop(u64 count = 1)
-    {
-        assert(size >= count);
-        size -= count;
-    }
-
-    void reverse() { reverse_memory(data, size); }
-
-    void make_c_string_compatible() { push('\0'); pop(); }
-
-    void clear() { size = 0; }
-
-    StringView to_string_view() { return StringView::construct(size, data); }
-
-    void reserve_at_least(u64 new_capacity)
-    {
-        data = (char*)default_reallocate(data, capacity * sizeof(char), new_capacity * sizeof(char));
-        capacity = new_capacity;
-    }
 };
+
+#define DEFAULT_STRING_CAPACITY 16
+
+static String allocate_string(u64 capacity = DEFAULT_STRING_CAPACITY)
+{
+    String result;
+    result.capacity = capacity;
+    result.size = 0;
+    result.data = (char*)allocate(sizeof(char) * capacity);
+    return result;
+}
+
+static String allocate_string_from_number(u64 value, u64 base = 10)
+{
+    assert(base <= 36, "number base out of range");
+    auto result = allocate_string(64);
+    result.size = number_to_string(value, result.data, base);
+    return result;
+}
+
+static String allocate_string_from_number(s64 value, u64 base = 10)
+{
+    assert(base <= 36, "number base out of range");
+    auto result = allocate_string(64);
+    result.size = number_to_string(value, result.data, base);
+    return result;
+}
+
+static String copy(String source)
+{
+    String result;
+    result.capacity = source.size;
+    result.size = source.size;
+    result.data = (char*)allocate(sizeof(char) * source.size);
+    for (u64 i = 0; i < source.size; i++)
+    {
+        result.data[i] = source.data[i];
+    }
+    return result;
+}
+
+static void deallocate(String string) { deallocate(string.data); }
+
+static void push(char c, String* string)
+{
+    if (string->size == string->capacity)
+    {
+        string->capacity *= 2;
+        string->data = (char*)reallocate(string->capacity * sizeof(char), string->data);
+    }
+    string->data[string->size] = c;
+    string->size++;
+}
+
+static String allocate_string_copy(const char* source)
+{
+    auto source_length = get_length(source);
+    auto result = allocate_string(source_length);
+    for (u64 i = 0; i < source_length; i++)
+    {
+        push(source[i], &result);
+    }
+    return result;
+}
+
+static void push(const char* source, String* string)
+{
+    for (u64 i = 0; source[i] != '\0'; i++)
+    {
+        push(source[i], string);
+    }
+}
+
+static void push(String other_string, String* target)
+{
+    for (u64 i = 0; i < other_string.size; i++)
+    {
+        push(other_string.data[i], target);
+    }
+}
+
+static void push(u64 number, u64 base, String* target)
+{
+    char buffer[20];
+    auto digits_count = number_to_string(number, buffer, base);
+    for (u64 i = 0; i < digits_count; i++)
+    {
+        push(buffer[i], target);
+    }
+}
+
+static void push(u64 number, String* target) { push(number, 10, target); }
+
+static void push(StringView source, String* target)
+{
+    for (u64 i = 0; i < source.size; i++)
+    {
+        push(source.data[i], target);
+    }
+}
+
+static void pop(String* target)
+{
+    assert(target->size != 1);
+    target->size--;
+}
+
+static void pop(u64 count, String* target)
+{
+    assert(target->size >= count);
+    target->size -= count;
+}
+
+static void reverse(String* string) { reverse_memory(string->data, string->size); }
+
+static void make_c_string_compatible(String* string) { push('\0', string); pop(string); }
+
+static void clear(String* string) { string->size = 0; }
+
+static StringView make_string_view(String string) { return make_string_view(string.size, string.data); }
+
+static void reserve_at_least(u64 new_capacity, String* string)
+{
+    if (string->capacity >= new_capacity) { return; }
+    string->data = (char*)reallocate(new_capacity * sizeof(char), string->data);
+    string->capacity = new_capacity;
+}
 
 static bool operator==(String left, String right)
 {

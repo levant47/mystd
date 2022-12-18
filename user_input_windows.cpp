@@ -43,8 +43,8 @@ static void click_on(u16 x, u16 y)
     inputs[2].type = INPUT_MOUSE;
     inputs[2].mi.dwFlags = MOUSEEVENTF_LEFTUP;
 
-    auto send_input_result = SendInput(ARRAY_SIZE(inputs), inputs, sizeof(INPUT));
-    assert_winapi(send_input_result == ARRAY_SIZE(inputs), "SendInput");
+    auto send_input_result = SendInput(countof(inputs), inputs, sizeof(INPUT));
+    assert_winapi(send_input_result == countof(inputs), "SendInput");
 }
 
 static bool char_requires_shift(char c)
@@ -119,16 +119,16 @@ static u16 char_to_vk_code(char c)
     {
         return VK_OEM_2;
     }
-    auto error_message = String::allocate();
-    error_message.push("char_to_vk_code: invalid argument: '");
-    error_message.push(c);
-    error_message.push("'");
-    error_message.push('\0');
+    auto error_message = allocate_string();
+    push("char_to_vk_code: invalid argument: '", &error_message);
+    push(c, &error_message);
+    push("'", &error_message);
+    push('\0', &error_message);
     assert_gui(false, error_message.data);
     return {};
 }
 
-static void type_in(CStringView text)
+static void type_in(const char* text)
 {
     for (u64 i = 0; text[i] != '\0'; i++)
     {
@@ -176,10 +176,10 @@ static void type_in(CStringView text)
 
 static void type_in(char c)
 {
-    auto string = String::allocate();
-    string.push(c);
-    string.push('\0');
+    auto string = allocate_string();
+    push(c, &string);
+    push('\0', &string);
     type_in(string.data);
-    string.deallocate();
+    deallocate(string);
     Sleep(50);
 }

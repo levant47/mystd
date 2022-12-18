@@ -27,14 +27,14 @@ static void assert_gui(bool condition, const char* user_message)
     ExitProcess(1);
 }
 
-static void assert_winapi(bool condition, CStringView function_name)
+static void assert_winapi(bool condition, const char* function_name)
 {
     if (condition)
     {
         return;
     }
 
-    CString error_message;
+    char* error_message;
     FormatMessage(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL,
@@ -49,14 +49,14 @@ static void assert_winapi(bool condition, CStringView function_name)
     ExitProcess(1);
 }
 
-static void assert_winapi_gui(bool condition, CString function_name = nullptr)
+static void assert_winapi_gui(bool condition, const char* function_name = nullptr)
 {
     if (condition)
     {
         return;
     }
 
-    CString error_message;
+    char* error_message;
     FormatMessage(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL,

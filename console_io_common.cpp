@@ -5,9 +5,9 @@ static void print(u64 value)
     print_buffer(message, number_length);
 }
 
-static void print(CStringView string)
+static void print(const char* string)
 {
-    print_buffer(string, get_c_string_length(string));
+    print_buffer(string, get_length(string));
 }
 
 static void print(char c)

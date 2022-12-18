@@ -1,32 +1,101 @@
-bool default_allocator_initialized = false;
-HANDLE process_heap;
+bool is_allocator_initialized;
+byte* MEMORY;
+// 1 MB
+// I'll change this code so that the capacity could be redefinable
+// (and I'll make memory allocation unrestricted at some point probably, or maybe a capacity of a few gigs would be enough, we'll see)
+// capacity should be aligned to page size
+#define MEMORY_CAPACITY (1024 * 1024)
 
-static byte* default_allocate(u64 size)
+struct AllocationMark
 {
-    if (!default_allocator_initialized)
+    bool is_in_use;
+    u64 size;
+};
+
+u64 get_bytes_available(AllocationMark* mark)
+{
+    u64 result = 0;
+    while (true)
     {
-        process_heap = GetProcessHeap();
-        assert_winapi(process_heap != nullptr, "GetProcessHeap");
-        default_allocator_initialized = true;
+        if ((byte*)mark == MEMORY + MEMORY_CAPACITY || mark->is_in_use) { return result; }
+        result += sizeof(AllocationMark) + mark->size;
+        mark = (AllocationMark*)((byte*)mark + sizeof(AllocationMark) + mark->size);
     }
-    auto result = (byte*)HeapAlloc(process_heap, 0, size);
-    assert(result != nullptr, "default_allocate: failed to allocate memory");
-    return result;
 }
 
-static void default_deallocate(void* address)
+void* allocate(u64 size)
 {
-    assert(default_allocator_initialized, "default_deallocate: default allocator has not been initialized");
+    if (!is_allocator_initialized)
+    {
+        MEMORY = (byte*)VirtualAlloc(nullptr, MEMORY_CAPACITY, MEM_RESERVE, PAGE_READWRITE);
+        auto mark = (AllocationMark*)MEMORY;
+        mark->is_in_use = false;
+        mark->size = MEMORY_CAPACITY;
+        is_allocator_initialized = true;
+     }
 
-    auto free_result = HeapFree(process_heap, 0, address);
-    assert(free_result != 0, "default_deallocate: failed to deallocate memory");
+    auto allocation_size = sizeof(AllocationMark) + size;
+    auto mark = (AllocationMark*)MEMORY;
+    while (true)
+    {
+        auto bytes_available = get_bytes_available(mark);
+        if (bytes_available >= allocation_size)
+        {
+            if (bytes_available - allocation_size <= sizeof(AllocationMark))
+            {
+                allocation_size = bytes_available;
+                size = allocation_size - sizeof(AllocationMark);
+            }
+            else
+            {
+                auto next_mark = (AllocationMark*)((byte*)mark + allocation_size);
+                next_mark->is_in_use = true;
+                next_mark->size = bytes_available - allocation_size;
+            }
+            break;
+        }
+        mark = (AllocationMark*)((byte*)mark + sizeof(AllocationMark) + mark->size);
+        assert((byte*)mark != MEMORY + MEMORY_CAPACITY, "out of memory");
+    }
+    mark->is_in_use = true;
+    mark->size = size;
+    return (byte*)mark + sizeof(AllocationMark);
 }
 
-static byte* default_reallocate(void* old_address, u64 old_size, u64 new_size)
+void deallocate(void* data)
 {
-    assert(default_allocator_initialized, "default_reallocate: default allocator has not been initialized");
+    auto mark = (AllocationMark*)((byte*)data - sizeof(AllocationMark));
+    assert(mark->is_in_use, "double free");
+    mark->is_in_use = false;
+}
 
-    auto result = (byte*)HeapReAlloc(process_heap, 0, old_address, new_size);
-    assert(result != nullptr, "default_reallocate: failed to reallocate memory");
-    return result;
+void* reallocate(u64 new_size, void* data)
+{
+    auto mark = (AllocationMark*)((byte*)data - sizeof(AllocationMark));
+    assert(mark->is_in_use, "reallocating deallocated memory");
+
+    auto next_mark = (AllocationMark*)((byte*)data + sizeof(AllocationMark) + mark->size);
+    u64 bytes_available = get_bytes_available(next_mark);
+    if (mark->size + bytes_available >= new_size)
+    {
+        if (mark->size + bytes_available - new_size <= sizeof(AllocationMark))
+        {
+            new_size = mark->size + bytes_available;
+        }
+        else
+        {
+            next_mark = (AllocationMark*)((byte*)mark + sizeof(AllocationMark) + new_size);
+            next_mark->is_in_use = false;
+            next_mark->size = mark->size + bytes_available - new_size - sizeof(AllocationMark);
+        }
+        mark->size = new_size;
+        return data;
+    }
+    else
+    {
+        auto new_data = (byte*)allocate(new_size);
+        for (u64 i = 0; i < mark->size; i++) { new_data[i] = ((byte*)data)[i]; }
+        deallocate(data);
+        return new_data;
+    }
 }

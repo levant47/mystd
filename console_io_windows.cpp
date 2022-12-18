@@ -1,7 +1,7 @@
 bool is_console_io_initialized = false;
 HANDLE STDOUT;
 
-static void print_buffer(CStringView data, u64 size)
+static void print_buffer(const char* data, u64 size)
 {
     if (!is_console_io_initialized)
     {

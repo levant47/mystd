@@ -1,4 +1,4 @@
-static Option<u64> get_file_size(CStringView path)
+static Option<u64> get_file_size(const char* path)
 {
     auto target_file_handle = CreateFileA(
         path,
@@ -9,16 +9,13 @@ static Option<u64> get_file_size(CStringView path)
         FILE_ATTRIBUTE_NORMAL,
         NULL
     );
-    if (target_file_handle == INVALID_HANDLE_VALUE)
-    {
-        return Option<u64>::empty();
-    }
+    if (target_file_handle == INVALID_HANDLE_VALUE) { return make_option<u64>(); }
     auto target_file_size = GetFileSize(target_file_handle, NULL);
     CloseHandle(target_file_handle);
-    return Option<u64>::construct(target_file_size);
+    return make_option(target_file_size);
 }
 
-static Option<String> read_whole_file(CStringView path)
+static Option<String> read_whole_file(const char* path)
 {
     auto target_file_handle = CreateFileA(
         path,
@@ -29,19 +26,16 @@ static Option<String> read_whole_file(CStringView path)
         FILE_ATTRIBUTE_NORMAL,
         NULL
     );
-    if (target_file_handle == INVALID_HANDLE_VALUE)
-    {
-        return Option<String>::empty();
-    }
+    if (target_file_handle == INVALID_HANDLE_VALUE) { return make_option<String>(); }
     auto target_file_size = GetFileSize(target_file_handle, NULL);
-    auto contents = String::allocate(target_file_size);
+    auto contents = allocate_string(target_file_size);
     ReadFile(target_file_handle, contents.data, target_file_size, NULL, NULL);
     contents.size = target_file_size;
     CloseHandle(target_file_handle);
-    return Option<String>::construct(contents);
+    return make_option(contents);
 }
 
-static bool write_whole_file(String data, CStringView path)
+static bool write_whole_file(String data, const char* path)
 {
     auto target_file_handle = CreateFileA(
         path,
@@ -68,7 +62,7 @@ static bool write_whole_file(String data, CStringView path)
 // argument is fully qualified name of the directory being deleted, without
 // trailing backslash and double null-terminated;
 // returns true if successful and false otherwise
-static bool delete_directory(CStringView path)
+static bool delete_directory(const char* path)
 { // https://stackoverflow.com/a/218636
     // TODO: explain
     SHFILEOPSTRUCT operation;
@@ -84,10 +78,10 @@ static bool delete_directory(CStringView path)
     return error == 0;
 }
 
-static bool delete_file(CStringView path) { return DeleteFileA(path); }
+static bool delete_file(const char* path) { return DeleteFileA(path); }
 
 // both arguments have to be double null-terminated
-static bool copy_directory(CString from, CString to)
+static bool copy_directory(char* from, char* to)
 { // https://stackoverflow.com/a/4725137
     // TODO: explain
     SHFILEOPSTRUCT operation;
@@ -103,13 +97,13 @@ static bool copy_directory(CString from, CString to)
     return error == 0;
 }
 
-static bool directory_exists(CStringView path)
+static bool directory_exists(const char* path)
 {
     auto dwAttrib = GetFileAttributes(path);
     return dwAttrib != INVALID_FILE_ATTRIBUTES && (dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
 
-static bool file_exists(CStringView path)
+static bool file_exists(const char* path)
 {
     auto dwAttrib = GetFileAttributes(path);
     return dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
