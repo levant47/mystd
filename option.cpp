@@ -26,14 +26,14 @@ template <typename T>
 static T unwrap(Option<T> option)
 {
     assert(option.has_data, "unwrap failed");
-    return value;
+    return option.value;
 }
 
 template <typename T>
 static T unwrap(const char* error, Option<T> option)
 {
     assert(option.has_data, error);
-    return value;
+    return option.value;
 }
 
 template <typename TResult, typename TError>

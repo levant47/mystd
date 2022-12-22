@@ -44,7 +44,7 @@ static void push(T element, List<T>* list)
     if (list->size == list->capacity)
     {
         list->capacity *= 2;
-        list->data = (T*)reallocate(data, sizeof(T) * list->capacity);
+        list->data = (T*)reallocate(list->data, sizeof(T) * list->capacity);
     }
     list->data[list->size] = element;
     list->size++;
