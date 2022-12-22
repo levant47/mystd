@@ -12,5 +12,5 @@ static void print_buffer(const char* data, u64 size)
         }
         is_console_io_initialized = true;
     }
-    WriteConsole(STDOUT, data, size, NULL, NULL);
+    WriteFile(STDOUT, data, size, NULL, NULL); // WriteConsole doesn't handle pipes!
 }
